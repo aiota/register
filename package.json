@@ -1,6 +1,6 @@
 {
 	"name": "aiota-register",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "AIoTA Device Registration Worker",
 	"main": "register.js",
 	"repository": {

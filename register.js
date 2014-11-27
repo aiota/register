@@ -4,20 +4,6 @@ var jsonValidate = require("jsonschema").validate;
 var MongoClient = require("mongodb").MongoClient;
 var config = require("./config");
 
-function randomKey(len, chars)
-{
-    chars = chars || "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
-    var rnd = crypto.randomBytes(len);
-	var value = new Array(len);
-	var l = chars.length;
-
-    for (var i = 0; i < len; i++) {
-        value[i] = chars[rnd[i] % l]
-    };
-
-    return value.join("");
-}
-
 function validate(instance, schema)
 {
 	var v = jsonValidate(instance, schema);
