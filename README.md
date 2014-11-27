@@ -1,0 +1,4 @@
+server
+======
+
+AIoTA Register Worker

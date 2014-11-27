@@ -1,0 +1,60 @@
+{
+	"name": "aiota-register",
+	"version": "0.0.1",
+	"description": "AIoTA Device Registration Worker",
+	"main": "register.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/aiota/register.git"
+	},
+	"author": "Arthur Viegers <arthur@mongodb.com>",
+	"contributors": [
+		{
+			"name": [ "AIoTA Team" ],
+			"email": [ "arthur@mongodb.com", "pattyn.kurt@gmail.com" ]
+		}
+	],
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "https://github.com/aiota/register/LICENSE"
+		}
+	],
+  	"dependencies": {
+		"aiota-utils": ">=0.0.1",
+		"amqp": ">=0.2.0",
+		"jsonschema": ">=1.0.0",
+		"mongodb": ">=1.4.10"
+	},
+	"bugs": {
+		"url": "https://github.com/iota/issues"
+	}
+}
+{
+	"name": "AIoTA_Register_Worker",
+	"version": "0.0.1",
+	"description": "AIoTA Register Worker",
+	"author": "Arthur Viegers <arthur@mongodb.com>",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/aiota/server.git"
+	},
+	"contributors": [
+		{
+			"name": [ "AIoTA Team" ],
+			"email": [ "arthur@mongodb.com", "pattyn.kurt@gmail.com" ]
+		}
+	],
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "https://github.com/aiota/utils/blob/master/LICENSE"
+		}
+	],
+	"engines": {
+		"node": ">=0.11.14",
+		"npm": ">=2.0.0"
+	},
+	"dependencies": {
+	}
+}
