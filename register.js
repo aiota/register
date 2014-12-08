@@ -25,7 +25,7 @@ function createDeviceResponse(db, header, payload, callback)
 		var resendTimeout = 10000;
 		var resendAfter = now + resendTimeout;
 		
-		var obj = { deviceId: header.deviceId, appId: header.tokencardId, requestId: header.requestId, action: "response", params: payload, status: 0, createdAt: now, timeoutAt: timeout, progress: [ { timestamp: now, status: "created" } ], resends: { numResends: 0, maxResends: maxResends, resendAfter: resendAfter, resendTimeout: resendTimeout } };
+		var obj = { deviceId: header.deviceId, encryption: header.encryption, requestId: header.requestId, action: "response", params: payload, status: 0, createdAt: now, timeoutAt: timeout, progress: [ { timestamp: now, status: "created" } ], resends: { numResends: 0, maxResends: maxResends, resendAfter: resendAfter, resendTimeout: resendTimeout } };
 		
 		collection.insert(obj, function(err, result) {
 			if (err) {
@@ -72,7 +72,7 @@ function handleRegister(db, msg, app, callback)
 			var verificationCode = Math.floor(Math.random() * 100000);
 
 			var set = { deviceName: msg.body.name, productName: msg.body.product };
-			set["apps." + msg.header.tokencardId] = { name: app.name, version: app.version, status: "pending", "session": { id: msg.header.requestId + ":" + verificationCode, timeoutAt: 0 }, "lastRequest": Date.now() };
+			set["apps." + msg.header.encryption.tokencardId] = { name: app.name, version: app.version, status: "pending", session: { id: msg.header.requestId + ":" + verificationCode, timeoutAt: 0 }, nonce: Math.floor(Math.random() * 4294967296), lastRequest: Date.now() };
 
 			collection.update({ _id: msg.header.deviceId }, { $set: set }, { upsert: true }, function(err, result) {
 				if (err) {
@@ -98,7 +98,7 @@ function handleUnregister(db, msg, callback)
 		}
 
 		var unset = {};
-		unset["apps." + msg.header.tokencardId] = 1;
+		unset["apps." + msg.header.encryption.tokencardId] = 1;
 
 		collection.update({ _id: msg.header.deviceId }, { $unset: unset }, function(err, result) {
 			if (err) {
@@ -144,8 +144,8 @@ function handleVerify(db, msg, callback)
 					}
 	
 					if (device && device.hasOwnProperty("apps")) {
-						if (device.apps.hasOwnProperty(msg.header.tokencardId)) {
-							var app = device.apps[msg.header.tokencardId];
+						if (device.apps.hasOwnProperty(msg.header.encryption.tokencardId)) {
+							var app = device.apps[msg.header.encryption.tokencardId];
 							
 							schema = {
 								type: "object",
@@ -178,8 +178,8 @@ function handleVerify(db, msg, callback)
 								if ((app.session.id == msg.body.requestId + ":" + msg.body.verificationCode[0])) {
 									var set = {};
 									
-									set["apps." + msg.header.tokencardId + ".status"] = "registered";
-									set["apps." + msg.header.tokencardId + ".session"] = { id: "", timeoutAt: 0 };
+									set["apps." + msg.header.encryption.tokencardId + ".status"] = "registered";
+									set["apps." + msg.header.encryption.tokencardId + ".session"] = { id: "", timeoutAt: 0 };
 						
 									collection.update({ _id: msg.header.deviceId }, { $set: set }, function(err, result) {
 										if (err) {
@@ -193,7 +193,7 @@ function handleVerify(db, msg, callback)
 												return;
 											}
 											
-											collection.update({ deviceId: msg.header.deviceId, appId: msg.header.tokencardId, requestId: msg.body.requestId }, { $push: { progress: { timestamp: Date.now(), status: "received verification code" } } }, function(err, result) {
+											collection.update({ deviceId: msg.header.deviceId, "encryption.tokencardId": msg.header.encryption.tokencardId, requestId: msg.body.requestId }, { $push: { progress: { timestamp: Date.now(), status: "received verification code" } } }, function(err, result) {
 												callback(err ? { error: err, errorCode: 200004 } : { status: "OK" });
 											});
 										});
@@ -239,7 +239,14 @@ function handleRegisterRequest(db, msg, callback)
 					type: { type: "string", enum: [ "register", "unregister", "verify" ], required: true },
 					timestamp: { type: "integer", minimum: 0, required: true },
 					ttl: { type: "integer", minimum: 0, required: true },
-					tokencardId: { type: "string", required: true },
+					encryption: {
+						type: "object",
+						properties: {
+							method: { type: "string", required: true },
+							tokencardId: { type: "string", required: true }
+						},
+						required: true
+					}
 				},
 				required: true
 			},
@@ -260,7 +267,7 @@ function handleRegisterRequest(db, msg, callback)
 				return;
 			}
 			
-			collection.findOne({ _id: msg.header.tokencardId }, { _id: 0, name: 1, version: 1 }, function(err, app) {
+			collection.findOne({ _id: msg.header.encryption.tokencardId }, { _id: 0, name: 1, version: 1 }, function(err, app) {
 				if (err) {
 					callback({ error: err, errorCode: 200002 });
 					return;
