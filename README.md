@@ -1,4 +1,4 @@
 server
 ======
 
-AIoTA Register Process
+AiotA Register Process

@@ -1,7 +1,7 @@
 {
 	"name": "aiota-register",
-	"version": "0.0.3",
-	"description": "AIoTA Device Registration Worker",
+	"version": "0.0.4",
+	"description": "AiotA Device Registration Micro Process",
 	"main": "register.js",
 	"repository": {
 		"type": "git",
@@ -10,7 +10,7 @@
 	"author": "Arthur Viegers <arthur@mongodb.com>",
 	"contributors": [
 		{
-			"name": [ "AIoTA Team" ],
+			"name": [ "AiotA Team" ],
 			"email": [ "arthur@mongodb.com", "pattyn.kurt@gmail.com" ]
 		}
 	],
