@@ -1,6 +1,6 @@
 {
 	"name": "aiota-register",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"description": "AiotA Device Registration Micro Process",
 	"main": "register.js",
 	"repository": {
