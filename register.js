@@ -2,7 +2,9 @@ var aiota = require("aiota-utils");
 var amqp = require("amqp");
 var jsonValidate = require("jsonschema").validate;
 var MongoClient = require("mongodb").MongoClient;
-var config = require("./config");
+
+var config = null;
+var processName = "register.js";
 
 function validate(instance, schema)
 {
@@ -352,35 +354,46 @@ function handleRegisterRequest(db, msg, callback)
 	}
 }
 
-MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/aiota", function(err, aiotaDB) {
+var args = process.argv.slice(2);
+ 
+MongoClient.connect("mongodb://" + args[0] + ":" + args[1] + "/" + args[2], function(err, aiotaDB) {
 	if (err) {
-		aiota.log(config.processName, config.serverName, aiotaDB, err);
+		aiota.log(processName, "", null, err);
 	}
 	else {
-		MongoClient.connect("mongodb://" + config.database.host + ":" + config.database.port + "/" + config.database.name, function(err, db) {
-			if (err) {
-				aiota.log(config.processName, config.serverName, aiotaDB, err);
+		aiota.getConfig(aiotaDB, function(c) {
+			if (c == null) {
+				aiota.log(processName, "", aiotaDB, "Error getting config from database");
 			}
 			else {
-				var bus = amqp.createConnection(config.amqp);
-				
-				bus.on("ready", function() {
-					var cl = { group: "system", type: "register" };
-					bus.queue(aiota.getQueue(cl), { autoDelete: false, durable: true }, function(queue) {
-						queue.subscribe({ ack: true, prefetchCount: 1 }, function(msg) {
-							handleRegisterRequest(db, msg, function(result) {
-								queue.shift();
+				config = c;
+
+				MongoClient.connect("mongodb://" + config.database.host + ":" + config.ports.mongodb + "/" + config.database.name, function(err, db) {
+					if (err) {
+						aiota.log(processName, config.serverName, aiotaDB, err);
+					}
+					else {
+						var bus = amqp.createConnection(config.amqp);
+						
+						bus.on("ready", function() {
+							var cl = { group: "system", type: "register" };
+							bus.queue(aiota.getQueue(cl), { autoDelete: false, durable: true }, function(queue) {
+								queue.subscribe({ ack: true, prefetchCount: 1 }, function(msg) {
+									handleRegisterRequest(db, msg, function(result) {
+										queue.shift();
+									});
+								});
 							});
 						});
-					});
-				});
-
-				setInterval(function() { aiota.heartbeat(config.processName, config.serverName, aiotaDB); }, 10000);
-
-				process.on("SIGTERM", function() {
-					aiota.terminateProcess(config.processName, config.serverName, aiotaDB, function() {
-						process.exit(1);
-					});
+		
+						setInterval(function() { aiota.heartbeat(processName, config.serverName, aiotaDB); }, 10000);
+		
+						process.on("SIGTERM", function() {
+							aiota.terminateProcess(processName, config.serverName, aiotaDB, function() {
+								process.exit(1);
+							});
+						});
+					}
 				});
 			}
 		});
